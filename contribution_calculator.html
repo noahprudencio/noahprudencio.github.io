@@ -11,8 +11,24 @@
         .logo-container { margin-bottom: 20px; }
         .sss-logo { height: 60px; width: auto; }
         
-        h2 { color: #0038a8; margin-top: 10px; border-bottom: 2px solid #eee; padding-bottom: 15px; font-size: 1.4rem; }
+        h2 { color: #0038a8; margin-top: 10px; border-bottom: 2px solid #eee; padding-bottom: 15px; font-size: 1.4rem; margin-bottom: 10px; }
         
+        /* Home Link Styling */
+        .home-link-container { margin-bottom: 20px; text-align: left; }
+        .btn-home { 
+            text-decoration: none; 
+            color: #0038a8; 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .btn-home:hover { background: #eef2ff; }
+
         .payment-date-row { 
             display: flex; 
             align-items: center; 
@@ -62,7 +78,7 @@
         @media print {
             body { background-color: white; padding: 0; }
             .card { box-shadow: none; max-width: 100%; padding: 0; }
-            .btn-add, .btn-remove, .button-group, .input-table, .logo-container, .payment-date-row { display: none !important; }
+            .btn-add, .btn-remove, .button-group, .input-table, .logo-container, .payment-date-row, .home-link-container { display: none !important; }
             #breakdownSection { display: block !important; margin-top: 0; }
             h2 { font-size: 1.2rem; }
             .breakdown-table th { background-color: #eee !important; color: black !important; border: 1px solid #ccc; }
@@ -77,6 +93,10 @@
     </div>
 
     <h2>SSS Contribution Penalty Calculator</h2>
+
+    <div class="home-link-container">
+        <a href="index.html" class="btn-home">← Back to Home Page</a>
+    </div>
 
     <div class="payment-date-row">
         <label for="paymentDateInput">Date of Payment:</label>
@@ -173,7 +193,6 @@ function calculateMultiPenalty() {
     }
 
     const calcDate = new Date(paymentDateValue);
-    // Set to end of day to ensure "on the due date" counts as not late
     calcDate.setHours(23, 59, 59, 999);
 
     const months = document.getElementsByClassName('month-input');
@@ -202,7 +221,6 @@ function calculateMultiPenalty() {
         if (isNaN(m) || isNaN(y) || (principal === 0 && ecPrincipal === 0)) continue;
         validRows++;
 
-        // Deadline is end of next month (e.g., March contrib due April 30)
         const deadline = new Date(y, m + 1, 0);
         deadline.setHours(23, 59, 59, 999);
         
@@ -212,11 +230,8 @@ function calculateMultiPenalty() {
         let penaltyForThisRow = 0;
         let ecPenaltyForThisRow = 0;
 
-        // ONLY calculate penalty if payment is strictly AFTER the deadline
         if (calcDate > deadline) {
             monthsOverdue = (calcDate.getFullYear() - deadline.getFullYear()) * 12 + (calcDate.getMonth() - deadline.getMonth());
-            
-            // If it's the same month but technically after deadline (e.g., May 1st for April 30th deadline)
             if (monthsOverdue < 1) monthsOverdue = 1;
             
             penaltyForThisRow = principal * 0.02 * monthsOverdue;
