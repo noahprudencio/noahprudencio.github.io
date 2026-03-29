@@ -67,7 +67,6 @@
         .breakdown-table td { padding: 8px; border: 1px solid #ddd; text-align: center; }
         .note-cell { font-style: italic; color: #666; font-size: 0.7rem; }
         
-        /* Conserve space for the Months Late column */
         .col-months-late { width: 60px; line-height: 1.1; }
 
         #resultsSummary { padding: 20px; background: #f0f4f8; border-radius: 8px; text-align: right; border: 1px solid #d1d9e6; }
@@ -118,8 +117,8 @@
         </thead>
         <tbody id="tableBody">
             <tr>
-                <td><input type="number" class="month-input" min="1" max="12" placeholder="e.g. 3"></td>
-                <td><input type="number" class="year-input" placeholder="2026"></td>
+                <td><input type="number" class="month-input" min="1" max="12" placeholder="e.g. 2"></td>
+                <td><input type="number" class="year-input" placeholder="e.g. 2026"></td>
                 <td><input type="number" class="amount-input" step="0.01" placeholder="0.00"></td>
                 <td><input type="number" class="ec-amount-input" step="0.01" placeholder="0.00"></td>
                 <td></td>
@@ -178,7 +177,7 @@ function addRow() {
     const tbody = document.getElementById('tableBody');
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td><input type="number" class="month-input" min="1" max="12" placeholder="e.g. 3"></td>
+        <td><input type="number" class="month-input" min="1" max="12" placeholder="e.g. 2"></td>
         <td><input type="number" class="year-input" placeholder="2026"></td>
         <td><input type="number" class="amount-input" step="0.01" placeholder="0.00"></td>
         <td><input type="number" class="ec-amount-input" step="0.01" placeholder="0.00"></td>
@@ -223,22 +222,36 @@ function calculateMultiPenalty() {
     let validRows = 0;
 
     for (let i = 0; i < months.length; i++) {
-        const m = parseInt(months[i].value);
-        const y = parseInt(years[i].value);
-        const principal = parseFloat(amounts[i].value) || 0;
-        const ecPrincipal = parseFloat(ecAmounts[i].value) || 0;
+        const mVal = months[i].value;
+        const yVal = years[i].value;
+        const ssVal = amounts[i].value;
+        const ecVal = ecAmounts[i].value;
 
-        if (isNaN(m) || isNaN(y) || (principal === 0 && ecPrincipal === 0)) continue;
+        // Check if any fields are empty
+        if (mVal === "" || yVal === "" || ssVal === "" || ecVal === "") {
+            alert("Please enter a valid value.");
+            return;
+        }
+
+        const m = parseInt(mVal);
+        const y = parseInt(yVal);
+        const principal = parseFloat(ssVal) || 0;
+        const ecPrincipal = parseFloat(ecVal) || 0;
+
         validRows++;
 
+        // Start deadline at the last day of the FOLLOWING month
         let deadline = new Date(y, m + 1, 0); 
         let notes = [];
         let note = getDayOrHolidayName(deadline);
+        
         while (note) {
             notes.push(note);
             deadline.setDate(deadline.getDate() + 1);
             note = getDayOrHolidayName(deadline);
         }
+        
+        deadline.setHours(23, 59, 59, 999);
 
         const dueDateString = deadline.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
         const notesString = notes.length > 0 ? [...new Set(notes)].join(', ') : '-';
@@ -247,8 +260,12 @@ function calculateMultiPenalty() {
         let penRow = 0, ecPenRow = 0;
 
         if (calcDate > deadline) {
-            monthsOverdue = (calcDate.getFullYear() - deadline.getFullYear()) * 12 + (calcDate.getMonth() - deadline.getMonth());
+            let diffYears = calcDate.getFullYear() - deadline.getFullYear();
+            let diffMonths = calcDate.getMonth() - deadline.getMonth();
+            monthsOverdue = (diffYears * 12) + diffMonths;
+            
             if (monthsOverdue < 1) monthsOverdue = 1;
+            
             penRow = principal * 0.02 * monthsOverdue;
             ecPenRow = ecPrincipal * 0.02 * monthsOverdue;
         }
@@ -272,6 +289,8 @@ function calculateMultiPenalty() {
         breakdownBody.appendChild(row);
     }
 
+    if (validRows === 0) return;
+
     document.getElementById('totalPrincipal').innerText = '₱' + tp.toLocaleString(undefined, {minimumFractionDigits: 2});
     document.getElementById('totalPenalty').innerText = '₱' + tPen.toLocaleString(undefined, {minimumFractionDigits: 2});
     document.getElementById('totalECPrincipal').innerText = '₱' + tecp.toLocaleString(undefined, {minimumFractionDigits: 2});
@@ -282,8 +301,6 @@ function calculateMultiPenalty() {
     document.getElementById('btnPrint').style.display = 'block';
 }
 
-// Holiday Map: Moved to the bottom for better organization
-// Holiday Map: 'YYYY-MM-DD': 'Holiday Name'
 const holidayList = {
     // 2026 Holidays
 	'2026-01-01': "New Year's Day",
