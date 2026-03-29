@@ -221,7 +221,17 @@ function calculateMultiPenalty() {
         if (isNaN(m) || isNaN(y) || (principal === 0 && ecPrincipal === 0)) continue;
         validRows++;
 
-        const deadline = new Date(y, m + 1, 0);
+        // Initial Deadline: Last day of the following month
+        let deadline = new Date(y, m + 1, 0);
+
+        // Weekend Adjustment Logic
+        const dayOfWeek = deadline.getDay(); 
+        if (dayOfWeek === 6) { // Saturday
+            deadline.setDate(deadline.getDate() + 2); // Move to Monday
+        } else if (dayOfWeek === 0) { // Sunday
+            deadline.setDate(deadline.getDate() + 1); // Move to Monday
+        }
+
         deadline.setHours(23, 59, 59, 999);
         
         const dueDateString = deadline.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -231,7 +241,10 @@ function calculateMultiPenalty() {
         let ecPenaltyForThisRow = 0;
 
         if (calcDate > deadline) {
+            // SSS counts every fraction of a month as a full month for penalty
             monthsOverdue = (calcDate.getFullYear() - deadline.getFullYear()) * 12 + (calcDate.getMonth() - deadline.getMonth());
+            
+            // If the payment month is later than the deadline month, it's at least 1 month late
             if (monthsOverdue < 1) monthsOverdue = 1;
             
             penaltyForThisRow = principal * 0.02 * monthsOverdue;
