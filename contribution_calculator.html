@@ -6,7 +6,7 @@
     <title>SSS Contribution Penalty Calculator</title>
     <style>
         body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; background-color: #f4f7f6; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 1000px; text-align: center; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 1100px; text-align: center; }
         
         .logo-container { margin-bottom: 20px; }
         .sss-logo { height: 60px; width: auto; }
@@ -67,7 +67,7 @@
         .breakdown-table td { padding: 8px; border: 1px solid #ddd; text-align: center; }
         .note-cell { font-style: italic; color: #666; font-size: 0.7rem; }
         
-        .col-months-late { width: 60px; line-height: 1.1; }
+        .col-months-late, .col-days-late { width: 60px; line-height: 1.1; }
 
         #resultsSummary { padding: 20px; background: #f0f4f8; border-radius: 8px; text-align: right; border: 1px solid #d1d9e6; }
         .summary-line { margin-bottom: 8px; font-size: 15px; color: #444; }
@@ -142,7 +142,8 @@
                     <th>Month</th>
                     <th>Year</th>
                     <th>Due Date</th>
-                    <th class="col-months-late">Months<br>Late</th>
+                    <th class="col-months-late">Months<br>Delayed</th>
+                    <th class="col-days-late">Days<br>Delayed</th>
                     <th>SS Amount</th>
                     <th>SS Penalty</th>
                     <th>EC Amount</th>
@@ -227,9 +228,8 @@ function calculateMultiPenalty() {
         const ssVal = amounts[i].value;
         const ecVal = ecAmounts[i].value;
 
-        // Check if any fields are empty
         if (mVal === "" || yVal === "" || ssVal === "" || ecVal === "") {
-            alert("Please enter a valid value.");
+            alert("Please fill in all fields for all added months.");
             return;
         }
 
@@ -240,7 +240,6 @@ function calculateMultiPenalty() {
 
         validRows++;
 
-        // Start deadline at the last day of the FOLLOWING month
         let deadline = new Date(y, m + 1, 0); 
         let notes = [];
         let note = getDayOrHolidayName(deadline);
@@ -257,15 +256,22 @@ function calculateMultiPenalty() {
         const notesString = notes.length > 0 ? [...new Set(notes)].join(', ') : '-';
         
         let monthsOverdue = 0;
+        let daysOverdue = 0;
         let penRow = 0, ecPenRow = 0;
 
         if (calcDate > deadline) {
+            // Days Calculation
+            const diffTime = Math.abs(calcDate - deadline);
+            daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // Months Calculation (Logic remains the same for penalty)
             let diffYears = calcDate.getFullYear() - deadline.getFullYear();
             let diffMonths = calcDate.getMonth() - deadline.getMonth();
             monthsOverdue = (diffYears * 12) + diffMonths;
             
             if (monthsOverdue < 1) monthsOverdue = 1;
             
+            // Penalty still based on months
             penRow = principal * 0.02 * monthsOverdue;
             ecPenRow = ecPrincipal * 0.02 * monthsOverdue;
         }
@@ -279,6 +285,7 @@ function calculateMultiPenalty() {
             <td>${y}</td>
             <td>${dueDateString}</td>
             <td>${monthsOverdue}</td>
+            <td>${daysOverdue}</td>
             <td>₱${principal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             <td>₱${penRow.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             <td>₱${ecPrincipal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
@@ -302,11 +309,10 @@ function calculateMultiPenalty() {
 }
 
 const holidayList = {
-    // 2026 Holidays
-	'2026-01-01': "New Year's Day",
+    '2026-01-01': "New Year's Day",
     '2026-02-17': 'Chinese New Year',
     '2026-04-02': 'Maundy Thursday',
-    '2026-04-03': 'Good Friday',
+	'2026-04-03': 'Good Friday',
     '2026-04-04': 'Black Saturday',
     '2026-04-09': 'Araw ng Kagitingan',
     '2026-05-01': 'Labor Day',
