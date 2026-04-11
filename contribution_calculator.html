@@ -179,7 +179,7 @@ function addRow() {
     const row = document.createElement('tr');
     row.innerHTML = `
         <td><input type="number" class="month-input" min="1" max="12" placeholder="e.g. 2"></td>
-        <td><input type="number" class="year-input" placeholder="2026"></td>
+        <td><input type="number" class="year-input" placeholder="e.g. 2026"></td>
         <td><input type="number" class="amount-input" step="0.01" placeholder="0.00"></td>
         <td><input type="number" class="ec-amount-input" step="0.01" placeholder="0.00"></td>
         <td><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">✕</button></td>
@@ -260,20 +260,26 @@ function calculateMultiPenalty() {
         let penRow = 0, ecPenRow = 0;
 
         if (calcDate > deadline) {
-            // Days Calculation
             const diffTime = Math.abs(calcDate - deadline);
             daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            // Months Calculation (Logic remains the same for penalty)
             let diffYears = calcDate.getFullYear() - deadline.getFullYear();
             let diffMonths = calcDate.getMonth() - deadline.getMonth();
             monthsOverdue = (diffYears * 12) + diffMonths;
             
             if (monthsOverdue < 1) monthsOverdue = 1;
             
-            // Penalty still based on months
-            penRow = principal * 0.02 * monthsOverdue;
+            // --- UPDATED PENALTY LOGIC ---
+            // Check if contribution is within March 2020 (3, 2020) to Feb 2022 (2, 2022)
+            const contributionDate = y * 100 + m; // e.g., March 2020 becomes 202003
+            const isCondoned = (contributionDate >= 202003 && contributionDate <= 202202);
+
+            const ssPenaltyRate = isCondoned ? 0 : 0.02;
+            penRow = principal * ssPenaltyRate * monthsOverdue;
+            
+            // EC Penalty remains 2% regardless
             ecPenRow = ecPrincipal * 0.02 * monthsOverdue;
+            // -----------------------------
         }
 
         const subtotal = principal + penRow + ecPrincipal + ecPenRow;
