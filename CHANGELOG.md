@@ -2,7 +2,17 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
+
+## [0.0.2] - 2026-04-28
+### Added
+
+### Changed
+- [SSSPenaltyCalc-AAAA]
+  Added email to contribution_calculator.html
  
+### Fixed
+
+
 ## [0.0.1] - 2026-04-28
 ### Added
 - [SSSPenaltyCalc-AAAA]
@@ -15,7 +25,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   Updated README.md
  
 ### Fixed
-
 
 
 ### Examples
